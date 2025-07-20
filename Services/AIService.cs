@@ -9,7 +9,6 @@ namespace ChatBot.Services
 {
     public class AIService(IHubContext<AIHub> hubContext, IChatCompletionService chatCompletionService, Kernel kernel)
     {
-        // HTTP Streaming için yeni method
         public async Task GetMessageStreamAsync(string prompt, string connectionId, CancellationToken cancellationToken, HttpResponse response)
         {
             OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
@@ -31,12 +30,10 @@ namespace ChatBot.Services
                     var chunkText = chunk.ToString();
                     responseContent += chunkText;
 
-                    // HTTP streaming olarak chunk'ı gönder
                     var bytes = Encoding.UTF8.GetBytes(chunkText);
                     await response.Body.WriteAsync(bytes, cancellationToken);
                     await response.Body.FlushAsync(cancellationToken);
                     
-                    // Kısa bir bekleme (isteğe bağlı)
                     await Task.Delay(50, cancellationToken);
                 }
             }
@@ -48,7 +45,6 @@ namespace ChatBot.Services
             history.AddAssistantMessage(responseContent);
         }
 
-        // SignalR için eski method (backward compatibility)
         public async Task GetMessageStreamAsync(string prompt, string connectionId, CancellationToken? cancellationToken = default!)
         {
             OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()

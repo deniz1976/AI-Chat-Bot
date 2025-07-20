@@ -29,20 +29,17 @@ export default function ChatBot() {
   const messageIdCounterRef = useRef<number>(0)
   const abortControllerRef = useRef<AbortController | null>(null)
 
-  // Benzersiz ID üret
   const generateUniqueId = (): string => {
     messageIdCounterRef.current += 1
     return `msg-${Date.now()}-${messageIdCounterRef.current}`
   }
 
-  // Auto scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
     }
   }, [messages, currentAssistantMessage])
 
-  // Cleanup function
   useEffect(() => {
     return () => {
       if (abortControllerRef.current) {
@@ -68,16 +65,13 @@ export default function ChatBot() {
     setIsLoading(true)
     setCurrentAssistantMessage("")
 
-    // Önceki stream'i iptal et
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
     abortControllerRef.current = new AbortController()
 
-    console.log("🚀 Mesaj gönderiliyor:", currentInput)
 
     try {
-      // HTTP Streaming isteği
       const response = await fetch("http://localhost:5284/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,41 +82,34 @@ export default function ChatBot() {
         signal: abortControllerRef.current.signal
       })
 
-      console.log("📡 Backend yanıt durumu:", response.status)
 
       if (!response.ok) {
-        throw new Error(`Backend hatası: ${response.status}`)
+        throw new Error(`${response.status}`)
       }
 
       if (!response.body) {
-        throw new Error("Response body yok")
+        throw new Error("Response body null")
       }
 
-      // Stream reader oluştur
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let fullResponse = ""
 
-      console.log("✅ Streaming başladı...")
 
       while (true) {
         const { done, value } = await reader.read()
         
         if (done) {
-          console.log("🏁 Streaming tamamlandı")
           break
         }
 
         const chunk = decoder.decode(value, { stream: true })
-        console.log("📦 Chunk alındı:", chunk)
         
         fullResponse += chunk
         setCurrentAssistantMessage(fullResponse)
       }
 
-      // Stream tamamlandığında mesajı kaydet
       if (fullResponse.trim()) {
-        console.log("💾 Final mesaj kaydediliyor:", fullResponse)
         const assistantMessage: Message = {
           id: generateUniqueId(),
           content: fullResponse.trim(),
@@ -136,14 +123,12 @@ export default function ChatBot() {
       setIsLoading(false)
 
     } catch (error) {
-      console.error("❌ Chat hatası:", error)
       setIsLoading(false)
       setCurrentAssistantMessage("")
       
-      // Hata mesajı göster
       const errorMessage: Message = {
         id: generateUniqueId(),
-        content: "Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.",
+        content: "please try again",
         role: "assistant",
         timestamp: new Date(),
       }
@@ -153,7 +138,7 @@ export default function ChatBot() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 transition-all duration-500">
-      {/* Background Pattern */}
+      {}
       <div className="absolute inset-0 bg-grid-pattern opacity-5 dark:opacity-10"></div>
 
       <div className="relative z-10 min-h-screen p-4 flex items-center justify-center">
@@ -164,7 +149,7 @@ export default function ChatBot() {
           className="w-full max-w-4xl"
         >
           <Card className="h-[90vh] flex flex-col shadow-2xl backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border-0 overflow-hidden">
-            {/* Header */}
+            {}
             <CardHeader className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:from-blue-500 dark:via-purple-500 dark:to-indigo-500 text-white p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -182,7 +167,7 @@ export default function ChatBot() {
               </div>
             </CardHeader>
 
-            {/* Chat Area */}
+            {}
             <CardContent className="flex-1 p-0 relative overflow-hidden">
               <ScrollArea className="h-full" ref={scrollAreaRef}>
                 <div className="p-6 space-y-6">
@@ -226,7 +211,7 @@ export default function ChatBot() {
               </ScrollArea>
             </CardContent>
 
-            {/* Input Area */}
+            {}
             <CardFooter className="border-t border-gray-200/50 dark:border-gray-700/50 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm p-6">
               <form onSubmit={handleSubmit} className="flex w-full gap-3">
                 <div className="relative flex-1">
