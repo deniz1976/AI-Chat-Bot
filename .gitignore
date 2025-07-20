@@ -106,4 +106,12 @@ dist
 .yarn/unplugged
 .yarn/build-state.yml
 .yarn/install-state.gz
-.pnp.* 
+.pnp.*
+
+# Next.js specific files (frontend)
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+.pnpm-debug.log* 
