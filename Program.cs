@@ -36,15 +36,6 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-//app.MapPost("/chat", async (AIService aiService, ChatRequestVM chatRequest, CancellationToken cancellationToken, HttpContext context) =>
-//{
-//    context.Response.Headers["Content-Type"] = "text/plain; charset=utf-8";
-//    context.Response.Headers["Cache-Control"] = "no-cache";
-//    context.Response.Headers["Connection"] = "keep-alive";
-
-//    await aiService.GetMessageStreamAsync(chatRequest.Prompt, chatRequest.ConnectionId, cancellationToken, context.Response);
-//});
-
 app.MapPost("/chat", async (AIService aiService, ChatRequestVM chatRequest, CancellationToken cancellationToken)
     => await aiService.GetMessageStreamAsync(chatRequest.Prompt, chatRequest.ConnectionId, cancellationToken));
 
@@ -55,13 +46,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 
-app.UseHttpsRedirection();
+app.UseRouting();
 
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapHub<ChatBot.Hubs.AIHub>("ai-hub");
-
+app.MapHub<ChatBot.Hubs.AIHub>("/ai-hub");
 
 app.Run();
