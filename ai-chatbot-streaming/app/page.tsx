@@ -51,8 +51,6 @@ export default function ChatBot() {
   const completeMessage = useCallback(() => {
     const finalMessage = currentMessageRef.current.trim()
     if (finalMessage) {
-      console.log("Final response:", finalMessage)
-      
       const assistantMessage: Message = {
         id: generateUniqueId(),
         content: finalMessage,
@@ -60,9 +58,6 @@ export default function ChatBot() {
         timestamp: new Date(),
       }
       setMessages(prev => [...prev, assistantMessage])
-      console.log("Assistant message added")
-    } else {
-      console.warn("Empty response received")
     }
 
     setCurrentAssistantMessage("")
@@ -75,11 +70,8 @@ export default function ChatBot() {
     
     const setupSignalR = async () => {
       if (connectionRef.current?.state === signalR.HubConnectionState.Connected) {
-        console.log("Connection already exists, skipping setup")
         return
       }
-
-      console.log("Setting up SignalR connection...")
       
       const newConnection = new signalR.HubConnectionBuilder()
         .withUrl("http://localhost:5284/ai-hub")
@@ -88,8 +80,6 @@ export default function ChatBot() {
 
       newConnection.on("ReceiveMessage", (message: string) => {
         if (!mounted) return
-        
-        console.log("SignalR message received:", message)
         
         setCurrentAssistantMessage(prev => {
           const newMessage = prev + message
@@ -103,19 +93,16 @@ export default function ChatBot() {
         
         streamTimeoutRef.current = setTimeout(() => {
           if (mounted) {
-            console.log("Timeout - stream completed")
             completeMessage()
           }
         }, 3000)
       })
 
-      newConnection.onreconnecting((error) => {
-        console.log("SignalR reconnecting...", error)
+      newConnection.onreconnecting(() => {
         if (mounted) setIsConnected(false)
       })
 
       newConnection.onreconnected((connectionId) => {
-        console.log("SignalR reconnected:", connectionId)
         if (mounted) {
           setIsConnected(true)
           if (connectionId) {
@@ -124,8 +111,7 @@ export default function ChatBot() {
         }
       })
 
-      newConnection.onclose((error) => {
-        console.log("SignalR connection closed:", error)
+      newConnection.onclose(() => {
         if (mounted) setIsConnected(false)
       })
 
@@ -136,16 +122,13 @@ export default function ChatBot() {
           return
         }
         
-        console.log("SignalR connection established. Connection ID:", newConnection.connectionId)
         connectionRef.current = newConnection
         setIsConnected(true)
         
         if (newConnection.connectionId) {
           connectionIdRef.current = newConnection.connectionId
-          console.log("Connection ID updated:", newConnection.connectionId)
         }
       } catch (error) {
-        console.error("SignalR connection error:", error)
         if (mounted) setIsConnected(false)
       }
     }
@@ -158,7 +141,6 @@ export default function ChatBot() {
         clearTimeout(streamTimeoutRef.current)
       }
       if (connectionRef.current) {
-        console.log("Closing SignalR connection...")
         connectionRef.current.stop()
         connectionRef.current = null
       }
@@ -169,9 +151,6 @@ export default function ChatBot() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || isLoading || !isConnected || !connectionRef.current) return
-
-    console.log("Sending message:", input)
-    console.log("Connection ID:", connectionIdRef.current)
 
     const userMessage: Message = {
       id: generateUniqueId(),
@@ -192,8 +171,6 @@ export default function ChatBot() {
     }
 
     try {
-      console.log("Starting API call...")
-      
       const response = await fetch("http://localhost:5284/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -203,20 +180,11 @@ export default function ChatBot() {
         })
       })
 
-      console.log("Response received:", {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok
-      })
-
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
-      console.log("Waiting for SignalR messages...")
-
     } catch (error) {
-      console.error("Error occurred:", error)
       setIsLoading(false)
       setCurrentAssistantMessage("")
       currentMessageRef.current = ""
